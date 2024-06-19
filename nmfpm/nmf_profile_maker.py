@@ -124,8 +124,8 @@ class NMFPM(object):
         dbl_fratio = 0.0,
         dbl_dvel = 0.0,
         seed = None,
-        verbosity= 0
-        
+        verbosity= 0,
+        llst_key = 'Strong'
     
     
     ):
@@ -147,7 +147,17 @@ class NMFPM(object):
         self.dbl_dvel = dbl_dvel
         self.seed = seed
         self.verbosity=verbosity
-        
+
+        if llst_key not in ['ISM', 'Strong', 'HI', 'H2', 'CO', 'EUV', 'Galaxy', 'AGN']:
+            llst_key = 'Strong'
+            if self.verbosity >0:
+                print("NMF-PM: incorrect llst_lkey for linetools.LineList not provided.")
+                print("\tMust be one of 'ISM', 'Strong', 'HI', 'H2', 'CO', 'EUV', 'Galaxy', 'AGN'.")
+                print("\tSet to 'Strong' by default.")
+
+
+        self.llst_key = llst_key
+
         #define index array 
         self.index=np.arange(self.nsim)
       
@@ -184,8 +194,8 @@ class NMFPM(object):
         #here read oscillator strengths from linetools or file
         if self.filename_ion_list == None:
             from linetools.lists.linelist import LineList
-            self.lines = LineList('Strong')
-            self.fstren = np.zeros_like(self.index, dtype=np.float)
+            self.lines = LineList(self.llst_key)
+            self.fstren = np.zeros_like(self.index, dtype=float)
             for ind in np.arange(self.nsim):
                 self.fstren[ind] = self.lines[self.trans_wl[ind]*u.AA]['f']
                 
@@ -213,7 +223,7 @@ class NMFPM(object):
         #get shape of vel array in native pixels
         self.natvpix=self.NMF_dct[0]['C'].shape[1]
         #index of zero velocity in native pixels
-        self.natvzero=np.int(self.natvpix/2)
+        self.natvzero=int(self.natvpix/2)
 
 
 
@@ -439,7 +449,7 @@ class NMFPM(object):
             metals2 = np.exp(-1.*S*cne[:,np.newaxis]*self.dbl_fratio)
             
             #compute new length of array to fit in doublet 
-            new_index=np.int(2*self.natvzero+self.dbl_dvel)
+            new_index=int(2*self.natvzero+self.dbl_dvel)
             vel_native=np.arange(new_index)-self.natvzero
             
             #insert first profile
@@ -451,7 +461,7 @@ class NMFPM(object):
                 print('NMF-PM: Inserting doublets')
 
             #insert second profile
-            istart=np.int(self.dbl_dvel)
+            istart=int(self.dbl_dvel)
             iend=istart+self.natvpix
             metals[:,istart:iend]=metals[:,istart:iend]*metals2
             
